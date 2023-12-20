@@ -6,66 +6,114 @@ channels:
 dependencies:
   - _libgcc_mutex=0.1=conda_forge
   - _openmp_mutex=4.5=2_kmp_llvm
-  - blas=1.0=mkl
+  - _r-mutex=1.0.1=anacondar_1
+  - binutils_impl_linux-64=2.38=h2a08ee3_1
+  - binutils_linux-64=2.38.0=hc2dff05_0
+  - blas=1.1=openblas
   - bottleneck=1.3.5=py310ha9d4c09_0
+  - bwidget=1.9.14=ha770c72_1
   - bzip2=1.0.8=h7b6447c_0
-  - ca-certificates=2023.05.30=h06a4308_0
+  - c-ares=1.24.0=hd590300_0
+  - ca-certificates=2023.11.17=hbcca054_0
+  - cairo=1.16.0=hb05425b_5
   - cni=1.0.1=ha975731_1
   - cni-plugins=1.0.1=ha8f183a_0
+  - curl=7.88.1=hdc1c0ab_1
   - dbus=1.13.6=he372182_0
   - expat=2.2.10=h9c3ff4c_0
+  - fontconfig=2.14.1=hef1e5e3_0
   - freetype=2.10.4=h0708190_1
+  - fribidi=1.0.10=h36c2ea0_0
+  - gcc_impl_linux-64=11.2.0=h1234567_1
+  - gcc_linux-64=11.2.0=h5c386dc_0
+  - gfortran_impl_linux-64=11.2.0=h1234567_1
+  - gfortran_linux-64=11.2.0=hc2dff05_0
   - glib=2.69.1=he621ea3_2
-  - icu=70.1=h27087fc_0
+  - graphite2=1.3.14=h295c915_1
+  - gxx_impl_linux-64=11.2.0=h1234567_1
+  - gxx_linux-64=11.2.0=hc2dff05_0
+  - harfbuzz=4.3.0=hf52aaf7_1
+  - icu=58.2=hf484d3e_1000
   - intel-openmp=2023.1.0=hdb19cb5_46305
+  - jpeg=9e=h0b41bf4_3
+  - kernel-headers_linux-64=2.6.32=he073ed8_16
+  - keyutils=1.6.1=h166bdaf_0
+  - krb5=1.20.1=h81ceb04_0
   - ld_impl_linux-64=2.38=h1181459_1
+  - lerc=3.0=h295c915_0
   - libarchive=3.5.2=hada088e_3
+  - libblas=3.9.0=16_linux64_openblas
+  - libcblas=3.9.0=16_linux64_openblas
+  - libcurl=7.88.1=hdc1c0ab_1
+  - libdeflate=1.17=h5eee18b_1
+  - libedit=3.1.20191231=he28a2e2_2
+  - libev=4.33=hd590300_2
   - libffi=3.4.4=h6a678d5_0
-  - libgcc-ng=13.1.0=he5830b7_0
+  - libgcc-devel_linux-64=11.2.0=h1234567_1
+  - libgcc-ng=13.2.0=h807b86a_3
+  - libgfortran-ng=11.2.0=h00389a5_1
+  - libgfortran5=11.2.0=h1234567_1
+  - libgomp=13.2.0=h807b86a_3
   - libiconv=1.17=h166bdaf_0
+  - liblapack=3.9.0=16_linux64_openblas
+  - libnghttp2=1.58.0=h47da74e_1
   - libnsl=2.0.0=h7f98852_0
+  - libopenblas=0.3.21=pthreads_h78a6416_3
   - libpng=1.6.39=h5eee18b_0
   - libseccomp=2.4.4=h166bdaf_3
   - libsqlite=3.42.0=h2797004_0
-  - libstdcxx-ng=11.2.0=h1234567_1
+  - libssh2=1.11.0=h0841786_0
+  - libstdcxx-devel_linux-64=11.2.0=h1234567_1
+  - libstdcxx-ng=13.2.0=h7e041cc_3
+  - libtiff=4.5.1=h6a678d5_0
   - libuuid=2.38.1=h0b41bf4_0
+  - libwebp-base=1.3.2=hd590300_0
   - libxcb=1.15=h7f8727e_0
-  - libxml2=2.9.14=h22db469_4
+  - libxml2=2.9.14=h74e7548_0
   - libzlib=1.2.13=hd590300_5
   - llvm-openmp=16.0.6=h4dfa4b3_0
   - lz4-c=1.9.3=h9c3ff4c_1
   - lzo=2.10=h516909a_1000
+  - make=4.3=hd18ef5c_1
   - mkl=2023.1.0=h6d00ec8_46342
   - mkl-service=2.4.0=py310h5eee18b_1
-  - mkl_fft=1.3.6=py310h1128e8f_1
-  - mkl_random=1.2.2=py310h1128e8f_1
   - ncurses=6.4=h6a678d5_0
-  - numexpr=2.8.4=py310h85018f9_1
-  - numpy=1.25.0=py310h5f9d8c6_0
-  - numpy-base=1.25.0=py310hb5e798b_0
+  - numexpr=2.8.7=py310h286c3b5_0
+  - numpy=1.26.2=py310hb13e2d6_0
   - oniguruma=6.9.8=h166bdaf_0
+  - openblas=0.3.21=pthreads_h320a7e8_3
   - openjdk=11.0.13=h87a67e3_0
-  - openssl=3.1.1=hd590300_1
+  - openssl=3.2.0=hd590300_1
   - pandas=1.5.3=py310h1128e8f_0
+  - pango=1.50.7=h05da053_0
   - pcre=8.45=h9c3ff4c_0
+  - pcre2=10.37=he7ceb23_1
   - pip=23.1.2=py310h06a4308_0
+  - pixman=0.42.2=h59595ed_0
   - python=3.10.12=hd12c33a_0_cpython
   - python-dateutil=2.8.2=pyhd3eb1b0_0
+  - python_abi=3.10=4_cp310
   - pytz=2022.7=py310h06a4308_0
+  - r-base=4.2.0=h1ae530e_0
+  - r-data.table=1.14.10=r42h029312a_0
+  - r-getopt=1.20.4=r42ha770c72_0
+  - r-optparse=1.7.3=r42hc72bb7e_2
   - readline=8.2=h5eee18b_0
   - setuptools=67.8.0=py310h06a4308_0
   - singularity=3.8.6=hf1ae047_0
   - six=1.16.0=pyhd3eb1b0_1
   - sqlite=3.41.2=h5eee18b_0
-  - squashfs-tools=4.4=hd0129a2_3
+  - squashfs-tools=4.6.1=hdfefc0d_0
+  - sysroot_linux-64=2.12=he073ed8_16
   - tabix=0.2.6=ha92aebf_0
   - tbb=2021.8.0=hdb19cb5_0
   - tk=8.6.12=h1ccaba5_0
+  - tktable=2.10=h0c5db8f_4
   - tzdata=2023c=h04d1e81_0
   - wheel=0.38.4=py310h06a4308_0
-  - xz=5.2.6=h166bdaf_0
+  - xz=5.4.5=h5eee18b_0
   - zlib=1.2.13=hd590300_5
-  - zstd=1.5.2=h8a70e8d_1
+  - zstd=1.5.5=hfc55251_0
   - pip:
       - certifi==2023.5.7
       - charset-normalizer==3.1.0

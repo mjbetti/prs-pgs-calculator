@@ -1,9 +1,14 @@
 # prs-pgs-calculator
 A set of scripts and accompanying instruction for how to compute polygenic risk scores (PRS) across all scores in the PGS Catalog and calculate risk percentile relative to gnomAD samples.
 
-**Disclaimer: The code in this repository is intended for purely educational use and is not intended to diagnose or treat any condition. Polygenic risk scores have a number of notable flaws (some of which are detailed here and here) that limit their potential for use in a clinical setting.**
+**Disclaimer: The code in this repository is intended for purely educational use and is not intended to diagnose or treat any condition. Polygenic risk scores have a number of notable flaws that limit their potential for use in a clinical setting. A selection of publications discussing some of these flaws and the ethical questions raised by clinical use of PRS is listed below:
 
-**Additionally, the example workflow depicted here show calculates PRS relative to publicly available, de-identified whole genome sequences from gnomAD, which have unknown phenotypes. Thus, it is impossible to compare the polygenic risk profile of target samples to that of actually affected reference individuals versus healthy controls for a given phenotype.**
+* [American College of Medical Genetics and Genomics (ACMG) statement](https://www.sciencedirect.com/science/article/pii/S109836002300816X#:~:text=A%20significant%20limitation%20of%20PRS,to%20exacerbate%20health%20care%20disparities.)
+* [Polygenic risk scores: a biased prediction?](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6309089/)
+* [Polygenic risk scores in the clinic: new perspectives needed on familiar ethical issues](https://genomemedicine.biomedcentral.com/articles/10.1186/s13073-021-00829-7)
+* [Problems with Using Polygenic Scores to Select Embryos](https://www.nejm.org/doi/full/10.1056/NEJMsr2105065)
+
+Additionally, the example workflow depicted here show calculates PRS relative to publicly available, de-identified whole genome sequences from gnomAD, which have unknown phenotypes. Thus, it is impossible to compare the polygenic risk profile of target samples to that of actually affected reference individuals versus healthy controls for a given phenotype.
 
 ## Dependencies
 The following dependencies are required to run the PRS calculation workflow: 
@@ -176,6 +181,154 @@ done
 * ```-b``` is the path of the input bim file
 * ```-o``` is the desired path of the reformated bim file that is output
 
+## Merging target data with the gnomAD dataset
+
+To avoid including an unnecessary amount of SNPs, a list of SNPs in the PGS Catalog should be compiled so that only these are retained in the gnomAD reference dataset:
+#### hg38
+```
+library("data.table")
+
+#Declare the path of the downloaded PGS Catalog scores
+in_dir <- "/mnt/16tb/personal_genome/pgs_catalog/pgs_cat_downloads/hg38"
+
+final_df <- data.frame()
+
+#Open each file and concatenate to data frame
+for (i in list.files(in_dir, pattern = "*.txt")) {
+    print(i)
+    in_file <- fread(paste(in_dir, i, sep = "/"), header = TRUE, sep = "\t", quote = "")
+    in_df <- as.data.frame(in_file)
+    final_df <- c(final_df, in_df$varid)
+    final_df <- unique(final_df)
+}
+
+final_df_unlisted <- unlist(final_df)
+
+write.table(final_df_unlisted, file = "/home/mbetti/personal_genome/pgs_catalog/pgs_catalog_snps_hg38.extract", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+```
+
+#### hg19
+```
+library("data.table")
+
+#Declare the path of the downloaded PGS Catalog scores
+in_dir <- "/mnt/16tb/personal_genome/pgs_catalog/pgs_cat_downloads/hg19"
+
+final_df <- data.frame()
+
+#Open each file and concatenate to data frame
+for (i in list.files(in_dir, pattern = "*.txt")) {
+    print(i)
+    in_file <- fread(paste(in_dir, i, sep = "/"), header = TRUE, sep = "\t", quote = "")
+    in_df <- as.data.frame(in_file)
+    final_df <- c(final_df, in_df$varid)
+    final_df <- unique(final_df)
+}
+
+final_df_unlisted <- unlist(final_df)
+
+write.table(final_df_unlisted, file = "/home/mbetti/personal_genome/pgs_catalog/pgs_catalog_snps_hg19.extract", sep = "\t", quote = FALSE, row.names = FALSE, col.names = FALSE)
+```
+
+...and then the gnomAD data is filtered to retain only these SNPs:
+```
+mkdir /mnt/16tb/gnomad/plink/pgs_catalog_snps
+cd /mnt/16tb/gnomad/plink/pgs_catalog_snps
+
+for i in {1..22}; do
+sbatch \
+--job-name=chr$i \
+--nodes=1 \
+--ntasks=1 \
+--cpus-per-task=1 \
+--mem=16G \
+--time=1-00:00:00 \
+--wrap="plink2 \
+--bfile /mnt/16tb/gnomad/plink/gnomad.genomes.v3.1.2.hgdp_tgp.chr$i \
+--extract /home/mbetti/personal_genome/pgs_catalog/pgs_catalog_snps_hg38.extract \
+--snps-only \
+--make-bed \
+--out /mnt/16tb/gnomad/plink/pgs_catalog_snps/gnomad.genomes.v3.1.2.hgdp_tgp.chr$i\.pgs_catalog_snps"
+done
+```
+
+Remove the CHM cell line synthetic diploid sample used for variant calling evaluation:
+```
+mkdir /mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm
+
+nano /mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/chm.remove
+
+0    CHMI_CHMI3_WGS2
+```
+
+```
+for i in {1..22}; do
+sbatch \
+--job-name=chr$i \
+--nodes=1 \
+--ntasks=1 \
+--cpus-per-task=1 \
+--mem=16G \
+--time=1-00:00:00 \
+--wrap="plink2 \
+--bfile /mnt/16tb/gnomad/plink/pgs_catalog_snps/gnomad.genomes.v3.1.2.hgdp_tgp.chr$i\.pgs_catalog_snps \
+--remove /mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/chm.remove \
+--make-bed \
+--out /mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr$i\.pgs_catalog_snps_no_chm"
+done
+```
+
+Make a list of the paths of the filtered files:
+```
+nano gnomad_allfiles.txt
+
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr1.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr2.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr3.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr4.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr5.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr6.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr7.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr8.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr9.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr10.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr11.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr12.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr13.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr14.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr15.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr16.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr17.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr18.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr19.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr20.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr21.pgs_catalog_snps_no_chm
+/mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.chr22.pgs_catalog_snps_no_chm
+```
+
+Merge all gnomAD by-chr files together:
+```
+plink --merge-list gnomad_allfiles.txt --make-bed --out /mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.pgs_catalog_snps_no_chm
+```
+
+Finally merge filtered gnomAD data with the target dataset:
+```
+plink --bfile /mnt/16tb/gnomad/plink/pgs_catalog_snps/no_chm/gnomad.genomes.v3.1.2.hgdp_tgp.pgs_catalog_snps_no_chm --bmerge /home/mbetti/personal_genome/pgs_catalog/chr_mb_vcfs_hg38/60820188479382_GFX0435435_MB.recal.snp.indel.hg38.anno.no_multiallelic.bed /home/mbetti/personal_genome/pgs_catalog/chr_mb_vcfs_hg38/60820188479382_GFX0435435_MB.recal.snp.indel.hg38.anno.no_multiallelic.bim /home/mbetti/personal_genome/pgs_catalog/chr_mb_vcfs_hg38/60820188479382_GFX0435435_MB.recal.snp.indel.hg38.anno.no_multiallelic.fam --make-bed --out /home/mbetti/personal_genome/pgs_catalog/chr_mb_vcfs_hg38/merge.gnomad.mb_all_chr.hg38 \
+--allow-extra-chr
+```
+
+Next use the ```pgs_run_argin.py``` script to run PRS prediction in parallel (via SLURM). This can be done by modifying the commands in ```submit_prs_calcs_parallel_hg38_gnomad.sh``` with your desired input and output file paths.
+
+Finally, use the ```compile_phenome_wide_prs_results.R``` R script to concatenate all scores and their respective percentiles of the target individual(s) relative to the gnomAD reference individuals:
+```
+Rscript /home/mbetti/personal_genome/pgs_catalog/compile_phenome_wide_prs_results.R \
+-i /home/mbetti/personal_genome/pgs_catalog/mb_outs_gnomad \
+-s MB \
+-o /home/mbetti/personal_genome/pgs_catalog/mb_outs_gnomad \
+-p mb_pgs_catalog_all
+```
+
+The result will be a CSV file (sorted from highest percentile to lowest) of polygenic risk percentiles relative to the gnomAD reference individuals.
 
 
 
